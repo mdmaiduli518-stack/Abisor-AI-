@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "A user's synced AI chat conversation metadata.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Chat title shown in history sidebar."
+        },
+        "lastMessagePreview": {
+          "type": "string",
+          "description": "Short preview of the latest message."
+        },
+        "createdAtMs": {
+          "type": "integer",
+          "description": "Client creation epoch milliseconds for ordering."
+        },
+        "updatedAtMs": {
+          "type": "integer",
+          "description": "Client update epoch milliseconds for ordering."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": ["userId", "title", "lastMessagePreview", "createdAtMs", "updatedAtMs", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A single message within a synced chat session.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["me", "bot"],
+          "description": "Message author role."
+        },
+        "text": {
+          "type": "string",
+          "description": "Message text content."
+        },
+        "attachmentName": {
+          "type": "string",
+          "description": "Optional attached file or image name."
+        },
+        "attachmentType": {
+          "type": "string",
+          "enum": ["image", "pdf", "text", "generated_image"],
+          "description": "Optional attachment category."
+        },
+        "timestampMs": {
+          "type": "integer",
+          "description": "Client message timestamp in epoch milliseconds."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": ["userId", "role", "text", "timestampMs", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatSession" },
+      "description": "Per-user synced chat conversations."
+    },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Messages belonging to a user's synced chat conversation."
+    }
+  }
+}

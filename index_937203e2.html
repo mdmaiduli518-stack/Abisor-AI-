@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>abisor ai</title>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,sans-serif;background:#f2f4f7;display:flex;flex-direction:column}
+header{background:#006a4e;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;font-weight:600}
+header .title{flex:1}
+header button{background:transparent;color:#fff;border:0;font-size:20px;padding:0 4px}
+#side{position:fixed;top:0;left:0;bottom:0;width:270px;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,.15);transform:translateX(-100%);transition:transform .2s;z-index:10;display:flex;flex-direction:column}
+#side.open{transform:translateX(0)}
+#side .top{padding:12px;border-bottom:1px solid #eee}
+#side .top button{width:100%;padding:10px;background:#006a4e;color:#fff;border:0;border-radius:8px;font-size:16px}
+#list{overflow-y:auto;flex:1}
+.item{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #f0f0f0;gap:6px}
+.item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.item.cur{background:#d1f0e4}
+.item .del{background:none;color:#c00;border:0;font-size:16px;padding:4px}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;z-index:5}
+#overlay.open{display:block}
+#chat{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column}
+.msg{max-width:85%;padding:10px 12px;border-radius:12px;margin:6px 0;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.bot{background:#fff;align-self:flex-start}
+.me{background:#d1f0e4;align-self:flex-end}
+.msg img{display:block;max-width:200px;border-radius:8px;margin-bottom:6px}
+.spk{background:none;border:0;font-size:16px;padding:2px 0;color:#006a4e;cursor:pointer}
+#preview{padding:6px 12px;background:#fff;font-size:13px;color:#555;display:none;cursor:pointer}
+#bar{display:flex;gap:6px;align-items:center;padding:8px;background:#fff;border-top:1px solid #ddd}
+#bar input[type=text]{flex:1;padding:10px;font-size:16px;border:1px solid #ccc;border-radius:8px;min-width:0}
+#bar button{padding:10px;background:#006a4e;color:#fff;border:0;border-radius:8px;font-size:16px}
+#bar .ico{background:#eef3f1;color:#006a4e;padding:8px 10px}
+#bar .ico.on{background:#c0392b;color:#fff}
+
+#login{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+#login.open{display:flex}
+.card{background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:340px;text-align:center;animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.logo{width:64px;height:64px;border-radius:50%;background:#006a4e;color:#fff;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;animation:float 2.4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.card h3{margin:6px 0 16px}
+.btn{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;background:#fff;font-size:15px;margin:6px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:#006a4e;color:#fff;border:0}
+.g{width:20px;height:20px;border-radius:50%;background:conic-gradient(#4285f4 0 25%,#34a853 0 50%,#fbbc05 0 75%,#ea4335 0);animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.soon{display:inline-block;margin-top:10px;font-size:13px;color:#b36b00;background:#fff4df;padding:4px 10px;border-radius:20px;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+#loginMsg{min-height:20px;font-size:14px;color:#555;margin-top:10px}
+#loginClose{background:none;border:0;color:#666;margin-top:8px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <button id="menu">☰</button>
+  <span class="title">abisor ai</span>
+  <button id="loginBtn" title="লগইন">👤</button>
+  <button id="spkAll" title="উত্তর শোনান">🔇</button>
+</header>
+<div id="overlay"></div>
+<div id="login">
+  <div class="card">
+    <div class="logo">A</div>
+    <h3>abisor ai-তে স্বাগতম</h3>
+    <button class="btn" id="gBtn"><span class="g"></span>Google দিয়ে লগইন</button>
+    <button class="btn primary" id="regBtn">নতুন অ্যাকাউন্ট খুলুন</button>
+    <div class="soon">শীঘ্রই আসছে</div>
+    <div id="loginMsg"></div>
+    <button id="loginClose">বন্ধ করুন</button>
+  </div>
+</div>
+
+<div id="side">
+  <div class="top"><button id="newChat">+ নতুন চ্যাট</button></div>
+  <div id="list"></div>
+</div>
+<div id="chat"></div>
+<div id="preview"></div>
+<div id="bar">
+  <button class="ico" id="attach" title="ছবি যুক্ত করুন">📎</button>
+  <input type="file" id="file" accept="image/*" hidden>
+  <button class="ico" id="mic" title="কথা বলুন">🎤</button>
+  <input type="text" id="q" placeholder="কিছু লিখুন..." autocomplete="off">
+  <button id="send">পাঠান</button>
+</div>
+
+<script>
+const API = "https://abisor-ai-api.abironahmed077.workers.dev";
+const KEY = "abisor_chats_v1";
+let chats = {};
+let curId = null;
+let pendingImg = null;
+let speakOn = false;
+
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY) || "null");
+    if(d){ chats = d.chats || {}; curId = d.curId || null; }
+  }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({chats, curId})); }catch(e){}
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function cur(){ return chats[curId]; }
+
+function newChat(){
+  const id = uid();
+  chats[id] = { id, title: "নতুন চ্যাট", msgs: [
+    { role: "bot", text: "আসসালামু আলাইকুম! আমি abisor ai। যা জানতে চান জিজ্ঞেস করুন।" }
+  ]};
+  curId = id;
+  save();
+  render();
+}
+
+function render(){
+  const chat = document.getElementById("chat");
+  const c = cur();
+  if(!c){ newChat(); return; }
+  chat.innerHTML = "";
+  c.msgs.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg " + (m.role === "me" ? "me" : "bot");
+    if(m.img){ const im = document.createElement("img"); im.src = m.img; d.appendChild(im); }
+    const t = document.createElement("div");
+    t.textContent = m.text;
+    d.appendChild(t);
+    if(m.role === "bot" && m.text && m.text !== "ভাবছি..."){
+      const b = document.createElement("button");
+      b.className = "spk"; b.textContent = "🔊";
+      b.onclick = () => speak(m.text);
+      d.appendChild(b);
+    }
+    chat.appendChild(d);
+  });
+  chat.scrollTop = chat.scrollHeight;
+  renderList();
+}
+
+function renderList(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  Object.values(chats)
+    .sort((a,b) => (b.id > a.id ? 1 : -1))
+    .forEach(c => {
+      const row = document.createElement("div");
+      row.className = "item" + (c.id === curId ? " cur" : "");
+      const s = document.createElement("span");
+      s.textContent = c.title;
+      s.onclick = () => { curId = c.id; save(); closeSide(); render(); };
+      const x = document.createElement("button");
+      x.className = "del"; x.textContent = "🗑";
+      x.onclick = () => {
+        if(!confirm("এই চ্যাটটি মুছবেন?")) return;
+        delete chats[c.id];
+        if(curId === c.id) curId = null;
+        const keys = Object.keys(chats);
+        if(keys.length === 0){ newChat(); }
+        else { if(!curId){ curId = keys[0]; } save(); render(); }
+      };
+      row.appendChild(s);
+      row.appendChild(x);
+      list.appendChild(row);
+    });
+}
+
+function openSide(){
+  document.getElementById("side").classList.add("open");
+  document.getElementById("overlay").classList.add("open");
+}
+function closeSide(){
+  document.getElementById("side").classList.remove("open");
+  document.getElementById("overlay").classList.remove("open");
+}
+document.getElementById("menu").onclick = openSide;
+document.getElementById("overlay").onclick = closeSide;
+document.getElementById("newChat").onclick = () => { newChat(); closeSide(); };
+
+document.getElementById("spkAll").onclick = (e) => {
+  speakOn = !speakOn;
+  e.target.textContent = speakOn ? "🔊" : "🔇";
+};
+
+function speak(text){
+  if(!("speechSynthesis" in window)){ alert("এই ব্রাউজারে ভয়েস নেই।"); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "bn-BD";
+  speechSynthesis.speak(u);
+}
+
+// ছবি যুক্ত করা
+document.getElementById("attach").onclick = () => document.getElementById("file").click();
+document.getElementById("file").onchange = (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    pendingImg = { url: r.result, name: f.name };
+    const p = document.getElementById("preview");
+    p.style.display = "block";
+    p.textContent = "সংযুক্ত: " + f.name + " (বাতিল করতে এখানে চাপুন)";
+  };
+  r.readAsDataURL(f);
+  e.target.value = "";
+};
+document.getElementById("preview").onclick = () => {
+  pendingImg = null;
+  document.getElementById("preview").style.display = "none";
+};
+
+// ভয়েস ইনপুট
+const micBtn = document.getElementById("mic");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+micBtn.onclick = () => {
+  if(!SR){ alert("এই ব্রাউজারে ভয়েস ইনপুট নেই।"); return; }
+  if(rec){ rec.stop(); return; }
+  rec = new SR();
+  rec.lang = "bn-BD";
+  rec.interimResults = false;
+  rec.onresult = (e) => { document.getElementById("q").value = e.results[0][0].transcript; };
+  rec.onend = () => { rec = null; micBtn.classList.remove("on"); };
+  rec.onerror = () => { rec = null; micBtn.classList.remove("on"); };
+  rec.start();
+  micBtn.classList.add("on");
+};
+
+// পাঠানো
+async function send(){
+  const input = document.getElementById("q");
+  const text = input.value.trim();
+  if(!text && !pendingImg) return;
+  const c = cur();
+  if(!c) return;
+
+  const msgText = text || "এই ছবিটি দেখুন";
+  const note = pendingImg ? "\n(ব্যবহারকারী একটি ছবি সংযুক্ত করেছেন: " + pendingImg.name + ")" : "";
+  c.msgs.push({ role: "me", text: msgText, img: pendingImg ? pendingImg.url : undefined });
+  if(c.title === "নতুন চ্যাট") c.title = msgText.slice(0, 30);
+
+  pendingImg = null;
+  document.getElementById("preview").style.display = "none";
+  input.value = "";
+  c.msgs.push({ role: "bot", text: "ভাবছি..." });
+  save();
+  render();
+
+  try{
+    const r = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msgText + note })
+    });
+    const d = await r.json();
+    c.msgs.pop();
+    c.msgs.push({ role: "bot", text: d.reply || "উত্তর পাওয়া যায়নি।" });
+  }catch(e){
+    c.msgs.pop();
+    c.msgs.push({ role: "bot", text: "সংযোগে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।" });
+  }
+  save();
+  render();
+  if(speakOn){ speak(c.msgs[c.msgs.length - 1].text); }
+}
+
+document.getElementById("send").onclick = send;
+document.getElementById("q").addEventListener("keydown", (e) => {
+  if(e.key === "Enter"){ e.preventDefault(); send(); }
+});
+
+
+document.getElementById("loginBtn").onclick = () => document.getElementById("login").classList.add("open");
+document.getElementById("loginClose").onclick = () => document.getElementById("login").classList.remove("open");
+document.getElementById("login").onclick = (e) => { if(e.target.id === "login") document.getElementById("login").classList.remove("open"); };
+const soonMsg = () => { document.getElementById("loginMsg").textContent = "এই অপশনটি এখনো চালু হয়নি। শীঘ্রই আসছে।"; };
+document.getElementById("gBtn").onclick = soonMsg;
+document.getElementById("regBtn").onclick = soonMsg;
+
+load();
+if(!cur()){ newChat(); } else { render(); }
+</script>
+</body>
+</html>

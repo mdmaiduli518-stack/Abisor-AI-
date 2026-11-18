@@ -1,0 +1,6 @@
+{
+  "name": "Abisor-AI",
+  "description": "Bengali-first mobile AI chat assistant with voice, multimodal attachments, image creation, Bangladesh quick knowledge, and study planner.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
